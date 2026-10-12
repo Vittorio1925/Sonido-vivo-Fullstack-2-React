@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Container, Row, Col, Form } from "react-bootstrap";
 import FormField from "../molecules/FormField";
 import Button from "../atoms/Button";
-
-const patronCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { validarNombreUsuario, validarCorreo } from "../../utils/validaciones";
 
 function LoginForm() {
   const [formData, setFormData] = useState({
@@ -31,33 +30,35 @@ function LoginForm() {
       ...formData,
       [nombre]: valor,
     });
+    
+  
+    if (mensaje.tipo === "danger") {
+      setMensaje({ texto: "", tipo: "" });
+    }
   }
 
   function handleSubmit(e) {
     e.preventDefault();
 
-    let esValido = true;
-    const nuevosErrores = { nombreUsuario: "", correo: "" };
-
     setTouched({ nombreUsuario: true, correo: true });
 
-    if (formData.nombreUsuario.trim() === "") {
-      nuevosErrores.nombreUsuario = "El nombre de usuario no puede estar vacio";
-      esValido = false;
-    }
+    const errorNombre = validarNombreUsuario(formData.nombreUsuario);
+    const errorCorreo = validarCorreo(formData.correo);
 
-    if (!patronCorreo.test(formData.correo.trim())) {
-      nuevosErrores.correo = "Ingresa un correo valido, ej: nombre@dominio.com";
-      esValido = false;
-    }
+    setErrors({
+      nombreUsuario: errorNombre,
+      correo: errorCorreo
+    });
 
-    setErrors(nuevosErrores);
+
+    const esValido = errorNombre === "" && errorCorreo === "";
 
     if (esValido) {
       setMensaje({
         texto: "¡Formulario enviado correctamente!",
         tipo: "success",
       });
+      console.log("Datos a enviar:", formData);
     } else {
       setMensaje({
         texto: "Por favor, corrige los campos marcados en rojo.",
@@ -76,6 +77,7 @@ function LoginForm() {
             <Form onSubmit={handleSubmit} noValidate>
               <FormField
                 id="nombreUsuario"
+                name="nombreUsuario" 
                 label="Nombre de usuario"
                 placeholder="Pepito Perez"
                 value={formData.nombreUsuario}
@@ -91,6 +93,7 @@ function LoginForm() {
 
               <FormField
                 id="correo"
+                name="correo" 
                 label="Correo electrónico"
                 type="email"
                 placeholder="ejemplo@gmail.com"
@@ -101,7 +104,7 @@ function LoginForm() {
                 isVerified={
                   touched.correo &&
                   !errors.correo &&
-                  patronCorreo.test(formData.correo.trim())
+                  formData.correo.trim() !== ""
                 }
               />
 
